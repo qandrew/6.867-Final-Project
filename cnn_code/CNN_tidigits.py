@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Dec  4 16:22:40 2016
-
 Beginning to construct tensorflow architecture for classifying tidigits 
 spectograms.
 
@@ -35,6 +33,7 @@ Specifically, they describe their methodology as follows:
     activations of the dW = 1024 dimensional fully connected
     layer immediately before the classification layer.
 
+CONV -> MAX POOL -> FULLY -> FULLY ->SOFTMAX
 """
 
 from load_data import get_data as ld

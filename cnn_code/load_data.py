@@ -11,7 +11,7 @@ based on the classification in the file name, assuming a file name of the format
 Other values of <NUM> will be discarded.
 
 It will also create a corresponding Y value in the set R^11, again corresponding
-to 0, 1, 2, 3, 4, 5, 6, 7, 8, 9m 'oh',   as aforementioned, in that order.
+to 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'oh',   as aforementioned, in that order.
 
 """
 
@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 # Modify if running on your own computer
 rootdir = '/home/sitara/test_single/test' #Sitara
-rootdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test/test1' #Andrew's code
+#rootdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test/test1' #Andrew's code
 
 bin_freq = 23
 window_size = 100   
@@ -71,29 +71,25 @@ def load_from_file(f):
         # pad data with excess rows of zeros about center
         cut = 1.*(window_size - len(data))
         data = [[0]*bin_freq]*int(np.floor(cut/2)) + data + [[0]*bin_freq]*int(np.ceil(cut/2))  
-    data = np.array(data)
-    dataFlipped = np.flipud(data.T)
-    return dataFlipped
+    #Convert data to a numpy array and invert it    
+    data = np.flipud(np.array(data))
+    return data
     
 def get_data(rootdir):
     '''Given a directory, load all the files within it as described on top'''
+    X = []
+    Y = []
     for subdir, dirs, files in os.walk(rootdir):
-        # print subdir
-        # print dirs
-        # print files
-        X = []
-        Y = []
         for file in files:
             try:
                 y = int(file[3])
                 y_val = np.zeros((dim_Y,1))
                 y_val[y] = 1
                 f = open(os.path.join(subdir, file))
-                print f
                 row = load_from_file(f)
                 f.close()
                 #check to ensure data has the right dimension
-                assert (bin_freq,window_size) == row.shape
+                assert (window_size, bin_freq) == row.shape
                 X.append(row)
                 Y.append(y_val)
             except ValueError:
@@ -104,24 +100,20 @@ def get_data(rootdir):
                     row = load_from_file(f)
                     f.close()
                     #check to ensure data has the right dimension
-                    assert (bin_freq,window_size) == row.shape
+                    assert (window_size, bin_freq) == row.shape
                     X.append(row)
                     Y.append(y_val)
     return np.array(X), np.array(Y)
     
 
 if __name__ == "__main__":
-    print "done"
+
     x,y = get_data(rootdir)
     print x[0]
-    print y[0].shape
+    print y[0]
 
     np.savetxt('test.txt', x[0])
-
-    # sitara = np.flipud(x[0].T)
-
     #example of printing a number
     plt.imshow(x[0], aspect='auto', interpolation='none')
-           # extent=extents(x) + extents(y))
     plt.show()
 
