@@ -25,7 +25,8 @@ import matplotlib.pyplot as plt
 rootdir = '/home/sitara/test_single/test' #Sitara
 #rootdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test/test1' #Andrew's code
 
-bin_freq = 23
+bin_freq = 23 
+spect_width = bin_freq + 2 # Add one pixel of zeros on either side of the image
 window_size = 100   
                     #Use a fixed window size, e.g. 100 frames and then paste the
                     #spectrogram of the digit in the middle. If the duration of the digit
@@ -73,6 +74,10 @@ def load_from_file(f):
         data = [[0]*bin_freq]*int(np.floor(cut/2)) + data + [[0]*bin_freq]*int(np.ceil(cut/2))  
     #Convert data to a numpy array and invert it    
     data = np.flipud(np.array(data))
+    #Pad one pixel of zeros on each side of the data array
+    zero = np.zeros((window_size,1))
+    data = np.hstack((zero,data))
+    data = np.hstack((data,zero))
     return data
     
 def get_data(rootdir):
@@ -89,7 +94,7 @@ def get_data(rootdir):
                 row = load_from_file(f)
                 f.close()
                 #check to ensure data has the right dimension
-                assert (window_size, bin_freq) == row.shape
+                assert (window_size, spect_width) == row.shape
                 X.append(row)
                 Y.append(y_val)
             except ValueError:
@@ -100,7 +105,7 @@ def get_data(rootdir):
                     row = load_from_file(f)
                     f.close()
                     #check to ensure data has the right dimension
-                    assert (window_size, bin_freq) == row.shape
+                    assert (window_size, spect_width) == row.shape
                     X.append(row)
                     Y.append(y_val)
     return np.array(X), np.array(Y)
