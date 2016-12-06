@@ -61,7 +61,7 @@ Ytrain = Ytrain.reshape(Ytrain.shape[0],Ytrain.shape[1],)
 Ytest = Ytest.reshape(Ytest.shape[0],Ytest.shape[1],)
 
 print 'Loaded training data: ', Xtrain.shape, ' ; ', Ytrain.shape
-print 'Loading testing data: ', Xtest.shape, ' ; ' , Ytest.shape
+print 'Loading testing data: ', Xtest.shape,  ' ; ', Ytest.shape
 
 BIN_FREQ = 23
 WINDOW_SIZE = 100
@@ -69,14 +69,24 @@ NUM_CHANNELS = 1
 NUM_LABELS = 11
 INCLUDE_TEST_SET = True
 
+normalization = False #choose whether we want local response normalization or not
+
+print 'Settings:'
+print 'BIN_FREQ', BIN_FREQ
+print 'WINDOW_SIZE', WINDOW_SIZE
+print "NUM_CHANNELS", NUM_CHANNELS
+print "NUM_LABELS", NUM_LABELS
+print "INCLUDE_TEST_SET", INCLUDE_TEST_SET
+print "normalization", normalization
+
 class SpectogramConvNet:
     def __init__(self):
         '''Initialize the class by loading the required datasets
         and building the graph'''
         
         # Initializing data set
-        self.train_X = Xtrain[:400]
-        self.train_Y = Ytrain[:400]
+        self.train_X = Xtrain #[:1500]
+        self.train_Y = Ytrain #[:1500]
         self.val_X = Xtest[:100]
         self.val_Y = Ytest[:100]
         if INCLUDE_TEST_SET:
@@ -125,7 +135,8 @@ class SpectogramConvNet:
                 hidden = tf.nn.relu(conv1 + conv1_biases)
 
                 # Perform local response normalization of width 5, alpha = 1e-4 and beta = 0.75
-                hidden = tf.nn.local_response_normalization(hidden, depth_radius=5, bias=None, alpha=1e-4, beta=0.75)
+                if normalization:
+                    hidden = tf.nn.local_response_normalization(hidden, depth_radius=5, bias=None, alpha=1e-4, beta=0.75)
             
                 # Layer 2: Implement max pooling layer of height 3, width 4, vertical stride 1 and horizontal stride 2       
                 maxpool_filter_height = 3
