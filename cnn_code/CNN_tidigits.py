@@ -38,7 +38,7 @@ CONV -> MAX POOL -> FULLY -> FULLY ->SOFTMAX
 
 from load_data import get_data as ld
 import matplotlib.pyplot as plt
-#import tensorflow as tf
+import tensorflow as tf
 import numpy as np
 import time
 
@@ -47,8 +47,9 @@ print 'Loading datasets ... \n'
 
 testdir = '/home/sitara/test_single/test' # Modify if running on your own computer
 traindir = '/home/sitara/test_single/train' # Modify if running on your own computer
-testdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test' #Andrew
-traindir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/train' #Andrew
+
+#testdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test' #Andrew
+#traindir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/train' #Andrew
 
 Xtest, Ytest = ld(testdir)
 Xtrain, Ytrain = ld(traindir)
@@ -60,11 +61,13 @@ def get_digit(digit_indexes, X, Y):
         y = Y[i]
         for digit_index in digit_indexes:
             if y[digit_index] > 0:
-                print digit_index
-                plt.imshow(X[i], aspect='auto', interpolation='none')
-                plt.show()
+#                print digit_index
+#                plt.imshow(X[i], aspect='auto', interpolation='none')
+#                plt.show()
                 x_vals.append(X[i])
-                y_vals.append(y)
+                y_val = np.zeros((len(digit_indexes),1))
+                y_val[digit_index-min(digit_indexes)] = 1
+                y_vals.append(y_val)
                 break
     return np.array(x_vals, dtype=np.float32), np.array(y_vals, dtype=np.float32)
             
@@ -85,7 +88,7 @@ print 'Loading testing data: ', Xtest.shape, ' ; ' , Ytest.shape
 BIN_FREQ = 23
 WINDOW_SIZE = 100
 NUM_CHANNELS = 1
-NUM_LABELS = 11
+NUM_LABELS = 2
 INCLUDE_TEST_SET = True
 
 class SpectogramConvNet:
@@ -94,8 +97,8 @@ class SpectogramConvNet:
         and building the graph'''
         
         # Initializing data set
-        self.train_X = Xtrain[:]
-        self.train_Y = Ytrain[:]
+        self.train_X = Xtrain[:400]
+        self.train_Y = Ytrain[:400]
         self.val_X = Xtest[:400]
         self.val_Y = Ytest[:400]
         if INCLUDE_TEST_SET:
@@ -110,7 +113,7 @@ class SpectogramConvNet:
 
         # Hyperparameters
         batch_size = 10
-        learning_rate = 0.01
+        learning_rate = 0.1
         num_training_steps = 1501
 
         with self.graph.as_default():
@@ -157,7 +160,7 @@ class SpectogramConvNet:
                                         padding='SAME', name='pool1')
             
                 # Layer 3: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
-                full1_depth = 1024
+                full1_depth = 4000
                 
                 shape = hidden.get_shape().as_list()
                 reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
@@ -170,7 +173,7 @@ class SpectogramConvNet:
                 hidden = tf.nn.dropout(hidden, full1_keep_prob)
 
                 # Layer 4: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
-                full2_depth = 1024
+                full2_depth = 4000
                 
                               
                 full2_weights = [full2_depth, NUM_LABELS]
@@ -196,8 +199,10 @@ class SpectogramConvNet:
             valid_prediction = tf.nn.softmax(network_model(tf_valid_dataset))
             test_prediction = tf.nn.softmax(network_model(tf_test_dataset))
             train_prediction = tf.nn.softmax(network_model(tf_train_dataset))
+           
             def train_model(num_steps=num_training_steps):
                 '''Train the model with minibatches in a tensorflow session'''
+                dropout_prob = 1 # No dropout
                 with tf.Session(graph=self.graph) as session:
                     tf.global_variables_initializer().run()
                     print '\nInitializing variables...'
@@ -209,13 +214,13 @@ class SpectogramConvNet:
                         # Data to feed into the placeholder variables in the tensorflow graph
                         
                         feed_dict = {tf_train_batch : batch_data, tf_train_labels : batch_labels,
-                                     full1_keep_prob: 0.5, full2_keep_prob: 0.5}
+                                     full1_keep_prob: dropout_prob, full2_keep_prob: dropout_prob}
                         _, l, predictions = session.run(
                           [optimizer, loss, batch_prediction], feed_dict=feed_dict)
                         if (step % 100 == 0):
                             train_preds = session.run(train_prediction, feed_dict={tf_train_dataset: self.train_X,
-                                                                           full1_keep_prob : 0.5, full2_keep_prob : 0.5})
-                            val_preds = session.run(valid_prediction, feed_dict={full1_keep_prob : 0.5, full2_keep_prob : 0.5})
+                                                                           full1_keep_prob : dropout_prob, full2_keep_prob : dropout_prob})
+                            val_preds = session.run(valid_prediction, feed_dict={full1_keep_prob : dropout_prob, full2_keep_prob : dropout_prob})
 
                             
                             print ''
