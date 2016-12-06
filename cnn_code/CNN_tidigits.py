@@ -84,11 +84,13 @@ class SpectogramConvNet:
         batch_size = 10
         learning_rate = 0.01
         layer1_filter_size = 5
-        layer1_depth = 24
+        layer1_depth = 40
         layer1_stride = 1
+        
         layer2_filter_size = 5
         layer2_depth = 16
         layer2_stride = 1
+        
         layer3_num_hidden = 64
         layer4_num_hidden = 64
         num_training_steps = 1501
@@ -115,23 +117,39 @@ class SpectogramConvNet:
             tf_train_dataset = tf.placeholder(
                 tf.float32, shape=[len(self.train_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
 
+            # Model
+            def network_model(data):
+                '''Define the actual network architecture'''
+
+                # Layer 1 is a convolutional neural net constructed using 
+                    #tf.nn.conv2d(input, filter, strides, padding, name=None)
+                    #Given an input tensor of shape [batch, in_height, in_width, in_channels] 
+                    #and a filter / kernel tensor of shape [filter_height, filter_width, in_channels, out_channels]
+               
+                conv1_weights = [5,BIN_FREQ,NUM_CHANNELS,64]         # [filter_height, filter_width, in_channels, output_channels]
+                conv1_weights = tf.Variable(tf.truncated_normal(conv1_weights, stddev=0.1))
+                conv1_stride = [1,1,1,1]                             # [1, stride, stride, 1]
+                conv1_biases = tf.Variable(tf.zeros([layer1_depth]))
+                conv1 = tf.nn.conv2d(data, conv1_weights, conv1_stride, padding='SAME', name='conv1')
+                hidden = tf.nn.relu(conv1 + conv1_biases)
+
+                # Perform local response normalization of width 5, alpha = 1e-4 and beta = 0.75
+                hidden = tf.nn.local_response_normalization(hidden, depth_radius=5, bias=None, alpha=1e-4, beta=0.75)
+            
+                # Layer 2: Implement max pooling layer of height 3, width 4, vertical stride 1 and horizontal stride 2       
+                maxpool_filter_height = 3
+                maxpool_filter_width = 4
+                maxpool_stride_vertical = 1
+                maxpool_stride_horizontal = 2
+                
+                hidden = tf.nn.max_pool(hidden, ksize=[1,  maxpool_filter_height,  maxpool_filter_width, 1],
+                                       strides=[1, maxpool_stride_vertical = 1, maxpool_stride_horizontal, 1],
+                                        padding='SAME', name='pool1')
+
+
+
             # Implement dropout
             dropout_keep_prob = tf.placeholder(tf.float32)
-
-            # Network weights/parameters that will be learned
-            layer1_weights = tf.Variable(tf.truncated_normal(
-                [layer1_filter_size, layer1_filter_size, NUM_CHANNELS, layer1_depth], stddev=0.1))
-            layer1_biases = tf.Variable(tf.zeros([layer1_depth]))
-            layer1_feat_map_size = int(np.ceil(float(BIN_FREQ) / layer1_stride))
-            if pooling:
-                layer1_feat_map_size = int(np.ceil(float(layer1_feat_map_size) / layer1_pool_stride))
-
-            layer2_weights = tf.Variable(tf.truncated_normal(
-                [layer2_filter_size, layer2_filter_size, layer1_depth, layer2_depth], stddev=0.1))
-            layer2_biases = tf.Variable(tf.constant(1.0, shape=[layer2_depth]))
-            layer2_feat_map_size = int(np.ceil(float(layer1_feat_map_size) / layer2_stride))
-            if pooling:
-                layer2_feat_map_size = int(np.ceil(float(layer2_feat_map_size) / layer2_pool_stride))
 
             layer3_weights = tf.Variable(tf.truncated_normal(
                 [layer2_feat_map_size * layer2_feat_map_size * layer2_depth, layer3_num_hidden], stddev=0.1))
@@ -140,37 +158,19 @@ class SpectogramConvNet:
             layer4_weights = tf.Variable(tf.truncated_normal(
               [layer4_num_hidden, NUM_LABELS], stddev=0.1))
             layer4_biases = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]))
-
-            # Model
-            def network_model(data):
-                '''Define the actual network architecture'''
-
-                # Layer 1
-                conv1 = tf.nn.conv2d(data, layer1_weights, [1, layer1_stride, layer1_stride, 1], padding='SAME')
-                hidden = tf.nn.relu(conv1 + layer1_biases)
-
-                if pooling:
-                    hidden = tf.nn.max_pool(hidden, ksize=[1, layer1_pool_filter_size, layer1_pool_filter_size, 1],
-                                       strides=[1, layer1_pool_stride, layer1_pool_stride, 1],
-                                        padding='SAME', name='pool1')
-
-                # Layer 2
-                conv2 = tf.nn.conv2d(hidden, layer2_weights, [1, layer2_stride, layer2_stride, 1], padding='SAME')
-                hidden = tf.nn.relu(conv2 + layer2_biases)
-
-                if pooling:
-                    hidden = tf.nn.max_pool(hidden, ksize=[1, layer2_pool_filter_size, layer2_pool_filter_size, 1],
-                                       strides=[1, layer2_pool_stride, layer2_pool_stride, 1],
-                                        padding='SAME', name='pool2')
-
-                # Layer 3
+            
+            
+                # Layer 3: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
+                
                 shape = hidden.get_shape().as_list()
                 reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
+                
                 hidden = tf.nn.relu(tf.matmul(reshape, layer3_weights) + layer3_biases)
                 hidden = tf.nn.dropout(hidden, dropout_keep_prob)
 
-                # Layer 4
+                # Layer 4: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
                 output = tf.matmul(hidden, layer4_weights) + layer4_biases
+                
                 return output
 
             # Training computation
