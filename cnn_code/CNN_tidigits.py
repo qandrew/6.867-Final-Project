@@ -37,7 +37,8 @@ CONV -> MAX POOL -> FULLY -> FULLY ->SOFTMAX
 """
 
 from load_data import get_data as ld
-import tensorflow as tf
+import matplotlib.pyplot as plt
+#import tensorflow as tf
 import numpy as np
 import time
 
@@ -51,6 +52,24 @@ traindir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/train' #An
 
 Xtest, Ytest = ld(testdir)
 Xtrain, Ytrain = ld(traindir)
+
+def get_digit(digit_indexes, X, Y):
+    x_vals = []
+    y_vals = []
+    for i in range(len(X)):
+        y = Y[i]
+        for digit_index in digit_indexes:
+            if y[digit_index] > 0:
+                print digit_index
+                plt.imshow(X[i], aspect='auto', interpolation='none')
+                plt.show()
+                x_vals.append(X[i])
+                y_vals.append(y)
+                break
+    return np.array(x_vals, dtype=np.float32), np.array(y_vals, dtype=np.float32)
+            
+Xtrain,Ytrain = get_digit([7,8],Xtrain,Ytrain)
+Xtest,Ytest = get_digit([7,8],Xtest,Ytest)
 
 # Reshape input vectors for one input channel
 Xtrain = Xtrain.reshape(Xtrain.shape[0],Xtrain.shape[1],Xtrain.shape[2],1)
@@ -87,8 +106,8 @@ class SpectogramConvNet:
         # Initializing data set
         self.train_X = Xtrain #[:1500]
         self.train_Y = Ytrain #[:1500]
-        self.val_X = Xtest[:100]
-        self.val_Y = Ytest[:100]
+        self.val_X = Xtest[:400]
+        self.val_Y = Ytest[:400]
         if INCLUDE_TEST_SET:
             self.test_X = Xtest[500:600]
             self.test_Y = Ytest[500:600]
@@ -205,13 +224,10 @@ class SpectogramConvNet:
                         _, l, predictions = session.run(
                           [optimizer, loss, batch_prediction], feed_dict=feed_dict)
                         if (step % 100 == 0):
-                            print 'Still alive 1'
                             train_preds = session.run(train_prediction, feed_dict={tf_train_dataset: self.train_X,
                                                                            full1_keep_prob : 0.5, full2_keep_prob : 0.5})
-                            print 'Still alive 2'
                             val_preds = session.run(valid_prediction, feed_dict={full1_keep_prob : 0.5, full2_keep_prob : 0.5})
-                            
-                            print 'Still alive 3'
+
                             
                             print ''
                             print('\tBatch loss at step %d: %f' % (step, l))
