@@ -46,6 +46,8 @@ print 'Loading datasets ... \n'
 
 testdir = '/home/sitara/test_single/test' # Modify if running on your own computer
 traindir = '/home/sitara/test_single/train' # Modify if running on your own computer
+testdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test' #Andrew
+traindir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/train' #Andrew
 
 Xtest, Ytest = ld(testdir)
 Xtrain, Ytrain = ld(traindir)
