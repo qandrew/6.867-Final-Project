@@ -85,12 +85,12 @@ def get_data(rootdir):
     X = []
     Y = []
     for subdir, dirs, files in os.walk(rootdir):
-        for file in files:
+        for filename in files:
             try:
-                y = int(file[3])
+                y = int(filename[3])
                 y_val = np.zeros((dim_Y,1), dtype=np.float32)
                 y_val[y] = 1
-                f = open(os.path.join(subdir, file))
+                f = open(os.path.join(subdir, filename))
                 row = load_from_file(f)
                 f.close()
                 #check to ensure data has the right dimension
@@ -98,10 +98,10 @@ def get_data(rootdir):
                 X.append(row)
                 Y.append(y_val)
             except ValueError:
-                if file[3]=='o':
+                if filename[3]=='o':
                     y_val = np.zeros((dim_Y,1))
                     y_val[dim_Y-1] = 1
-                    f = open(os.path.join(subdir, file))
+                    f = open(os.path.join(subdir, filename))
                     row = load_from_file(f)
                     f.close()
                     #check to ensure data has the right dimension
