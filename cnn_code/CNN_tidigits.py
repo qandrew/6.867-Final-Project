@@ -58,8 +58,8 @@ Xtest = Xtest.reshape(Xtest.shape[0],Xtest.shape[1],Xtest.shape[2],1)
 Ytrain = Ytrain.reshape(Ytrain.shape[0],Ytrain.shape[1],)
 Ytest = Ytest.reshape(Ytest.shape[0],Ytest.shape[1],)
 
-print 'Loaded training data: ', Xtrain.shape, ' ; ', Ytrain.shape,'\n'
-print 'Loading testing data: ', Xtest.shape, ' ; ' , Ytest.shape, '\n'
+print 'Loaded training data: ', Xtrain.shape, ' ; ', Ytrain.shape
+print 'Loading testing data: ', Xtest.shape, ' ; ' , Ytest.shape
 
 BIN_FREQ = 23
 WINDOW_SIZE = 100
@@ -73,13 +73,13 @@ class SpectogramConvNet:
         and building the graph'''
         
         # Initializing data set
-        self.train_X = Xtrain
-        self.train_Y = Ytrain
-        self.val_X = Xtest[:200]
-        self.val_Y = Ytest[:200]
+        self.train_X = Xtrain[:400]
+        self.train_Y = Ytrain[:400]
+        self.val_X = Xtest[:100]
+        self.val_Y = Ytest[:100]
         if INCLUDE_TEST_SET:
-            self.test_X = Xtest[500:]
-            self.test_Y = Ytest[500:]
+            self.test_X = Xtest[500:600]
+            self.test_Y = Ytest[500:600]
         
         self.graph = tf.Graph()
         self.define_tensorflow_graph()
@@ -97,8 +97,7 @@ class SpectogramConvNet:
             tf_train_batch = tf.placeholder(
                 tf.float32, shape=(batch_size, WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS))
             tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, NUM_LABELS))
-            tf_valid_dataset = tf.placeholder(
-                tf.float32, shape=[len(self.val_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
+            tf_valid_dataset = tf.constant(self.val_X)
             tf_test_dataset = tf.placeholder(
                 tf.float32, shape=[len(self.val_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
             tf_train_dataset = tf.placeholder(
@@ -180,28 +179,32 @@ class SpectogramConvNet:
                 '''Train the model with minibatches in a tensorflow session'''
                 with tf.Session(graph=self.graph) as session:
                     tf.global_variables_initializer().run()
-                    print 'Initializing variables...'
+                    print '\nInitializing variables...'
 
                     for step in range(num_steps):
                         offset = (step * batch_size) % (self.train_Y.shape[0] - batch_size)
                         batch_data = self.train_X[offset:(offset + batch_size), :, :, :]
                         batch_labels = self.train_Y[offset:(offset + batch_size), :]
-                        print 'what dat booty do? feed in data to the graph'
                         # Data to feed into the placeholder variables in the tensorflow graph
-                        print batch_labels.shape
+                        
                         feed_dict = {tf_train_batch : batch_data, tf_train_labels : batch_labels,
                                      full1_keep_prob: 0.5, full2_keep_prob: 0.5}
                         _, l, predictions = session.run(
                           [optimizer, loss, batch_prediction], feed_dict=feed_dict)
                         if (step % 100 == 0):
+                            print 'Still alive 1'
                             train_preds = session.run(train_prediction, feed_dict={tf_train_dataset: self.train_X,
                                                                            full1_keep_prob : 0.5, full2_keep_prob : 0.5})
+                            print 'Still alive 2'
                             val_preds = session.run(valid_prediction, feed_dict={full1_keep_prob : 0.5, full2_keep_prob : 0.5})
+                            
+                            print 'Still alive 3'
+                            
                             print ''
-                            print('Batch loss at step %d: %f' % (step, l))
-                            print('Batch training accuracy: %.1f%%' % accuracy(predictions, batch_labels))
-                            print('Validation accuracy: %.1f%%' % accuracy(val_preds, self.val_Y))
-                            print('Full train accuracy: %.1f%%' % accuracy(train_preds, self.train_Y))
+                            print('\tBatch loss at step %d: %f' % (step, l))
+                            print('\tBatch training accuracy: %.1f%%' % accuracy(predictions, batch_labels))
+                            print('\tValidation accuracy: %.1f%%' % accuracy(val_preds, self.val_Y))
+                            print('\tFull train accuracy: %.1f%%' % accuracy(train_preds, self.train_Y))
 
             # save train model function so it can be called later
             self.train_model = train_model
