@@ -45,34 +45,36 @@ import time
 
 print 'Loading datasets ... \n'
 
-testdir = '/home/sitara/test_single/test' # Modify if running on your own computer
-traindir = '/home/sitara/test_single/train' # Modify if running on your own computer
+# testdir = '/home/sitara/test_single/test' # Modify if running on your own computer
+# traindir = '/home/sitara/test_single/train' # Modify if running on your own computer
 
-#testdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test' #Andrew
-#traindir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/train' #Andrew
+testdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test' #Andrew
+traindir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/train' #Andrew
+testdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/dumbtest' #Andrew
+traindir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/dumb' #Andrew
 
 Xtest, Ytest = ld(testdir)
 Xtrain, Ytrain = ld(traindir)
 
-def get_digit(digit_indexes, X, Y):
-    x_vals = []
-    y_vals = []
-    for i in range(len(X)):
-        y = Y[i]
-        for digit_index in digit_indexes:
-            if y[digit_index] > 0:
-#                print digit_index
-#                plt.imshow(X[i], aspect='auto', interpolation='none')
-#                plt.show()
-                x_vals.append(X[i])
-                y_val = np.zeros((len(digit_indexes),1))
-                y_val[digit_index-min(digit_indexes)] = 1
-                y_vals.append(y_val)
-                break
-    return np.array(x_vals, dtype=np.float32), np.array(y_vals, dtype=np.float32)
+# def get_digit(digit_indexes, X, Y):
+#     x_vals = []
+#     y_vals = []
+#     for i in range(len(X)):
+#         y = Y[i]
+#         for digit_index in digit_indexes:
+#             if y[digit_index] > 0:
+# #                print digit_index
+# #                plt.imshow(X[i], aspect='auto', interpolation='none')
+# #                plt.show()
+#                 x_vals.append(X[i])
+#                 y_val = np.zeros((len(digit_indexes),1))
+#                 y_val[digit_index-min(digit_indexes)] = 1
+#                 y_vals.append(y_val)
+#                 break
+#     return np.array(x_vals, dtype=np.float32), np.array(y_vals, dtype=np.float32)
             
-Xtrain,Ytrain = get_digit([7,8],Xtrain,Ytrain)
-Xtest,Ytest = get_digit([7,8],Xtest,Ytest)
+# Xtrain,Ytrain = get_digit([7,8],Xtrain,Ytrain)
+# Xtest,Ytest = get_digit([7,8],Xtest,Ytest)
 
 # Reshape input vectors for one input channel
 Xtrain = Xtrain.reshape(Xtrain.shape[0],Xtrain.shape[1],Xtrain.shape[2],1)

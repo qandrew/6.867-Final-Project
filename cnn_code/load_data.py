@@ -22,8 +22,8 @@ import matplotlib.pyplot as plt
 
 
 # Modify if running on your own computer
-rootdir = '/home/sitara/test_single/test' #Sitara
-#rootdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/test/test1' #Andrew's code
+# rootdir = '/home/sitara/test_single/test' #Sitara
+rootdir = '/home/andrew/Dropbox (MIT)/6867_Project/single_utterances/dumb' #Andrew's code
 
 bin_freq = 23 
 spect_width = bin_freq  # Don't add one pixel of zeros on either side of the image
@@ -37,7 +37,7 @@ window_size = 100
                     #of the training examples. This allows your network to have a
                     #consistent input size for every training example (similar to how MNIST
                     #digits are all 28x28).
-dim_Y = 11  
+dim_Y = 2  
                     #digit recognition over the 11 classes in TIDIGITS (0 through
                     #9 plus "oh"),
 
@@ -114,11 +114,16 @@ def get_data(rootdir):
 if __name__ == "__main__":
 
     x,y = get_data(rootdir)
-    print x[0]
-    print y[0]
+    print x.shape
+    print y.shape
+    for i in xrange(len(y)):
+        print y[i]
+        print x[i][30]
 
-    np.savetxt('test.txt', x[0])
+    # a = np.zeros(x[0].shape)
+
+    # np.savetxt('test.txt', a)
     #example of printing a number
-    plt.imshow(x[0], aspect='auto', interpolation='none')
-    plt.show()
+    # plt.imshow(x[0], aspect='auto', interpolation='none',cmap='gray')
+    # plt.show()
 
