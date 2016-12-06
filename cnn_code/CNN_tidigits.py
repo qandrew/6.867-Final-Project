@@ -50,12 +50,20 @@ traindir = '/home/sitara/test_single/train' # Modify if running on your own comp
 Xtest, Ytest = ld(testdir)
 Xtrain, Ytrain = ld(traindir)
 
+# Reshape input vectors for one input channel
+Xtrain = Xtrain.reshape(Xtrain.shape[0],Xtrain.shape[1],Xtrain.shape[2],1)
+Xtest = Xtest.reshape(Xtest.shape[0],Xtest.shape[1],Xtest.shape[2],1)
+
+# Reshape labels to (num_data,11,)
+Ytrain = Ytrain.reshape(Ytrain.shape[0],Ytrain.shape[1],)
+Ytest = Ytest.reshape(Ytest.shape[0],Ytest.shape[1],)
+
 print 'Loaded training data: ', Xtrain.shape, ' ; ', Ytrain.shape,'\n'
 print 'Loading testing data: ', Xtest.shape, ' ; ' , Ytest.shape, '\n'
 
 BIN_FREQ = 23
 WINDOW_SIZE = 100
-NUM_CHANNELS = 3
+NUM_CHANNELS = 1
 NUM_LABELS = 11
 INCLUDE_TEST_SET = True
 
@@ -69,8 +77,6 @@ class SpectogramConvNet:
         self.train_Y = Ytrain
         self.val_X = Xtest[:200]
         self.val_Y = Ytest[:200]
-        print 'train', self.train_X.shape, self.train_Y.shape
-        print 'val', self.val_X.shape, self.val_Y.shape
         if INCLUDE_TEST_SET:
             self.test_X = Xtest[500:]
             self.test_Y = Ytest[500:]
@@ -114,7 +120,6 @@ class SpectogramConvNet:
                 conv1_weights = tf.Variable(tf.truncated_normal(conv1_weights, stddev=0.1))
                 conv1_stride = [1,1,1,1]                             # [1, stride, stride, 1]
                 conv1_biases = tf.Variable(tf.zeros([64]))
-                print 'data', data.get_shape()
                 conv1 = tf.nn.conv2d(data, conv1_weights, conv1_stride, padding='SAME', name='conv1')
                 hidden = tf.nn.relu(conv1 + conv1_biases)
 
@@ -168,15 +173,9 @@ class SpectogramConvNet:
 
             # Predictions for the training, validation, and test data.
             batch_prediction = tf.nn.softmax(logits)
-            print 'batch done'
-            print tf_train_batch.get_shape()
-            print tf_valid_dataset.get_shape()
             valid_prediction = tf.nn.softmax(network_model(tf_valid_dataset))
-
-            print 'valid done'
             test_prediction = tf.nn.softmax(network_model(tf_test_dataset))
             train_prediction = tf.nn.softmax(network_model(tf_train_dataset))
-
             def train_model(num_steps=num_training_steps):
                 '''Train the model with minibatches in a tensorflow session'''
                 with tf.Session(graph=self.graph) as session:
@@ -187,8 +186,9 @@ class SpectogramConvNet:
                         offset = (step * batch_size) % (self.train_Y.shape[0] - batch_size)
                         batch_data = self.train_X[offset:(offset + batch_size), :, :, :]
                         batch_labels = self.train_Y[offset:(offset + batch_size), :]
-
+                        print 'what dat booty do? feed in data to the graph'
                         # Data to feed into the placeholder variables in the tensorflow graph
+                        print batch_labels.shape
                         feed_dict = {tf_train_batch : batch_data, tf_train_labels : batch_labels,
                                      full1_keep_prob: 0.5, full2_keep_prob: 0.5}
                         _, l, predictions = session.run(
