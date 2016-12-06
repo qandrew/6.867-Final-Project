@@ -37,7 +37,8 @@ CONV -> MAX POOL -> FULLY -> FULLY ->SOFTMAX
 """
 
 from load_data import get_data as ld
-import tensorflow as tf
+import matplotlib.pyplot as plt
+#import tensorflow as tf
 import numpy as np
 import time
 
@@ -57,6 +58,9 @@ def get_digit(digit_indexes, X, Y):
         y = Y[i]
         for digit_index in digit_indexes:
             if y[digit_index] > 0:
+                print digit_index
+                plt.imshow(X[i], aspect='auto', interpolation='none')
+                plt.show()
                 x_vals.append(X[i])
                 y_vals.append(y)
                 break
