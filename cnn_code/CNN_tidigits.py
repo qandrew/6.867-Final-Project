@@ -57,7 +57,7 @@ BIN_FREQ = 23
 WINDOW_SIZE = 100
 NUM_CHANNELS = 3
 NUM_LABELS = 11
-INCLUDE_TEST_SET = False
+INCLUDE_TEST_SET = True
 
 class SpectogramConvNet:
     def __init__(self):
@@ -67,9 +67,10 @@ class SpectogramConvNet:
         # Initializing data set
         self.train_X = Xtrain
         self.train_Y = Ytrain
-        self.val_X = Xtest[:500]
-        self.val_Y = Ytest[:500]
-    
+        self.val_X = Xtest[:200]
+        self.val_Y = Ytest[:200]
+        print 'train', self.train_X.shape, self.train_Y.shape
+        print 'val', self.val_X.shape, self.val_Y.shape
         if INCLUDE_TEST_SET:
             self.test_X = Xtest[500:]
             self.test_Y = Ytest[500:]
@@ -90,7 +91,8 @@ class SpectogramConvNet:
             tf_train_batch = tf.placeholder(
                 tf.float32, shape=(batch_size, WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS))
             tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, NUM_LABELS))
-            tf_valid_dataset = tf.constant(self.val_X)
+            tf_valid_dataset = tf.placeholder(
+                tf.float32, shape=[len(self.val_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
             tf_test_dataset = tf.placeholder(
                 tf.float32, shape=[len(self.val_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
             tf_train_dataset = tf.placeholder(
@@ -112,6 +114,7 @@ class SpectogramConvNet:
                 conv1_weights = tf.Variable(tf.truncated_normal(conv1_weights, stddev=0.1))
                 conv1_stride = [1,1,1,1]                             # [1, stride, stride, 1]
                 conv1_biases = tf.Variable(tf.zeros([64]))
+                print 'data', data.get_shape()
                 conv1 = tf.nn.conv2d(data, conv1_weights, conv1_stride, padding='SAME', name='conv1')
                 hidden = tf.nn.relu(conv1 + conv1_biases)
 
@@ -148,16 +151,12 @@ class SpectogramConvNet:
                 full2_weights = [full2_depth, NUM_LABELS]
                 full2_weights = tf.Variable(tf.truncated_normal(full2_weights, stddev=0.1))    
                 full2_bias = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]))
-               
-                print 'here 1'
-                hidden = tf.nn.relu(tf.matmul(hidden, full2_weights) + full2_bias)
-                
-                print 'here 2'
+
+                hidden = tf.nn.relu(tf.matmul(hidden, full2_weights) + full2_bias)      
                 hidden = tf.nn.dropout(hidden, full2_keep_prob)
-                
-                
-                output = hidden
-                
+          
+          
+                output = hidden      
                 return output
 
             # Training computation
@@ -169,14 +168,19 @@ class SpectogramConvNet:
 
             # Predictions for the training, validation, and test data.
             batch_prediction = tf.nn.softmax(logits)
+            print 'batch done'
+            print tf_train_batch.get_shape()
+            print tf_valid_dataset.get_shape()
             valid_prediction = tf.nn.softmax(network_model(tf_valid_dataset))
+
+            print 'valid done'
             test_prediction = tf.nn.softmax(network_model(tf_test_dataset))
             train_prediction = tf.nn.softmax(network_model(tf_train_dataset))
 
             def train_model(num_steps=num_training_steps):
                 '''Train the model with minibatches in a tensorflow session'''
                 with tf.Session(graph=self.graph) as session:
-                    tf.initialize_all_variables().run()
+                    tf.global_variables_initializer().run()
                     print 'Initializing variables...'
 
                     for step in range(num_steps):
@@ -202,8 +206,6 @@ class SpectogramConvNet:
             # save train model function so it can be called later
             self.train_model = train_model
 
-def weight_decay_penalty(weights, penalty):
-    return penalty * sum([tf.nn.l2_loss(w) for w in weights])
 
 def accuracy(predictions, labels):
   return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))

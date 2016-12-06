@@ -73,7 +73,7 @@ def load_from_file(f):
         cut = 1.*(window_size - len(data))
         data = [[0]*bin_freq]*int(np.floor(cut/2)) + data + [[0]*bin_freq]*int(np.ceil(cut/2))  
     #Convert data to a numpy array and invert it    
-    data = np.flipud(np.array(data))
+    data = np.flipud(np.array(data,dtype=np.float32))
     #Pad one pixel of zeros on top and bottom of array
     zero = np.zeros((bin_freq,))
     data[0] = zero
@@ -88,7 +88,7 @@ def get_data(rootdir):
         for file in files:
             try:
                 y = int(file[3])
-                y_val = np.zeros((dim_Y,1))
+                y_val = np.zeros((dim_Y,1), dtype=np.float32)
                 y_val[y] = 1
                 f = open(os.path.join(subdir, file))
                 row = load_from_file(f)
@@ -108,7 +108,7 @@ def get_data(rootdir):
                     assert (window_size, spect_width) == row.shape
                     X.append(row)
                     Y.append(y_val)
-    return np.array(X), np.array(Y)
+    return np.array(X,dtype=np.float32), np.array(Y, dtype=np.float32)
     
 
 if __name__ == "__main__":
