@@ -112,11 +112,21 @@ class SpectogramConvNet:
         self.train_X = Xtrain #[:1500]
         self.train_Y = Ytrain #[:1500]
 
-        self.val_X = Xtest[:400]
-        self.val_Y = Ytest[:400]
+        self.val_X = Xtest[:10]
+        self.val_Y = Ytest[:10]
         if INCLUDE_TEST_SET:
-            self.test_X = Xtest[500:600]
-            self.test_Y = Ytest[500:600]
+            self.test_X = Xtest[10:]
+            self.test_Y = Ytest[10:]
+
+        print 'train Y are'
+        print self.train_Y
+
+        print 'val Y are'
+        print self.val_Y
+
+        print 'test Y are'
+        print self.test_Y
+
         
         self.graph = tf.Graph()
         self.define_tensorflow_graph()
@@ -136,7 +146,7 @@ class SpectogramConvNet:
             tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, NUM_LABELS))
             tf_valid_dataset = tf.constant(self.val_X)
             tf_test_dataset = tf.placeholder(
-                tf.float32, shape=[len(self.val_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
+                tf.float32, shape=[len(self.test_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
             tf_train_dataset = tf.placeholder(
                 tf.float32, shape=[len(self.train_X),  WINDOW_SIZE, BIN_FREQ, NUM_CHANNELS])
  
@@ -174,7 +184,7 @@ class SpectogramConvNet:
                                         padding='SAME', name='pool1')
             
                 # Layer 3: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
-                full1_depth = 4000
+                full1_depth = 1024
                 
                 shape = hidden.get_shape().as_list()
                 reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
@@ -187,7 +197,7 @@ class SpectogramConvNet:
                 hidden = tf.nn.dropout(hidden, full1_keep_prob)
 
                 # Layer 4: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
-                full2_depth = 4000
+                full2_depth = 1024
                 
                               
                 full2_weights = [full2_depth, NUM_LABELS]
@@ -236,12 +246,18 @@ class SpectogramConvNet:
                                                                            full1_keep_prob : dropout_prob, full2_keep_prob : dropout_prob})
                             val_preds = session.run(valid_prediction, feed_dict={full1_keep_prob : dropout_prob, full2_keep_prob : dropout_prob})
 
+
                             
                             print ''
                             print('\tBatch loss at step %d: %f' % (step, l))
                             print('\tBatch training accuracy: %.1f%%' % accuracy(predictions, batch_labels))
                             print('\tValidation accuracy: %.1f%%' % accuracy(val_preds, self.val_Y))
                             print('\tFull train accuracy: %.1f%%' % accuracy(train_preds, self.train_Y))
+                            if INCLUDE_TEST_SET:
+                                test_preds = session.run(test_prediction, feed_dict={tf_test_dataset: self.test_X,
+                                    full1_keep_prob : dropout_prob, full2_keep_prob : dropout_prob})                                
+                                print('\tTEST accuracy: %.1f%%' % accuracy(test_preds, self.train_Y))
+
 
             # save train model function so it can be called later
             self.train_model = train_model
