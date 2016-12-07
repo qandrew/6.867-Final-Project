@@ -128,8 +128,12 @@ class SpecConvNet:
             layer3_biases = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]))
 
             # Model
-            def network_model(data):
-                '''Define the actual network architecture'''
+            def network_model(data,getLayer=100):
+                '''
+                    Define the actual network architecture
+                    getLayer param defines which layer we want to output from the network model
+                    which makes it easier to run session.run to get the output data per layer
+                '''
 
                 # Layer 1
                 conv1 = tf.nn.conv2d(data, layer1_weights, [1, layer1_stride, layer1_stride, 1], padding='SAME')
@@ -139,14 +143,17 @@ class SpecConvNet:
                     hidden = tf.nn.max_pool(hidden, ksize=[1, layer1_pool_filter_height, layer1_pool_filter_width, 1],
                                        strides=[1, layer1_pool_stride_vert, layer1_pool_stride_hor, 1],
                                        padding='SAME', name='pool1')
+                if getLayer==1: return hidden
 
-                # Layer 2
+                # Layer 2 this is a 1024 fully connected layer
                 shape = hidden.get_shape().as_list()
                 reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
                 hidden = tf.nn.relu(tf.matmul(reshape, layer2_weights) + layer2_biases)
                 hidden = tf.nn.dropout(hidden, dropout_keep_prob)
 
-                # Layer 3
+                if getLayer==2: return hidden
+
+                # Layer 3. output is a 11 dim
                 output = tf.matmul(hidden, layer3_weights) + layer3_biases
                 return output
 
@@ -200,6 +207,17 @@ class SpecConvNet:
                             self.val_plot.append(val_acc)
                             self.train_plot.append(train_acc)
                             self.steps.append(step)
+                        if (step == num_steps-1): #last step has best model
+                            print "last step, getting penultimate layer (fully connected one)"
+                            val_last = network_model(tf_valid_dataset,getLayer=2)
+                            self.tosave = session.run(val_last, feed_dict={dropout_keep_prob : 1.0}) #get second last layer
+                            
+                            #save the |val|*1024 last fully connected layer to a text file
+                            np.savetxt('featureVector/cnnLastLayer.txt')
+                            #save the corresponding actual classifications to a text file
+                            np.savetxt('featureVector/cnnActualYVals.txt')
+
+
 
             # save train model function so it can be called later
             self.train_model = train_model
@@ -217,6 +235,10 @@ if __name__ == '__main__':
     conv_net.train_model()
     t2 = time.time()
     print "Finished training. Total time taken:", t2-t1
+
+    print len(conv_net.tosave)
+    print conv_net.tosave.shape
+    print conv_net.tosave
 
     print "Plotting"
     plt.plot(conv_net.steps,conv_net.batch_plot,'ro-',label='batch')
