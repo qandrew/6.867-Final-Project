@@ -42,6 +42,16 @@ import tensorflow as tf
 import numpy as np
 import time
 
+def accuracy(predictions, labels):
+    return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
+          / predictions.shape[0])
+
+
+predictions = np.array([1,0,0])
+labels =np.array([1,0,0])
+#print accuracy(predictions, labels)
+
+
 
 print 'Loading datasets ... \n'
 
@@ -71,8 +81,19 @@ def get_digit(digit_indexes, X, Y):
                 break
     return np.array(x_vals, dtype=np.float32), np.array(y_vals, dtype=np.float32)
             
+def make_bw(X,Y):
+    for i in range(len(X)):
+        if Y[i][0]==1:
+            X[i] = 0
+        else:
+            X[i] = 10
+    return np.array(X), Y
+            
 Xtrain,Ytrain = get_digit([7,8],Xtrain,Ytrain)
 Xtest,Ytest = get_digit([7,8],Xtest,Ytest)
+
+Xtrain, Ytrain = make_bw(Xtrain, Ytrain)
+Xtest, Ytest = make_bw(Xtest, Ytest)
 
 # Reshape input vectors for one input channel
 Xtrain = Xtrain.reshape(Xtrain.shape[0],Xtrain.shape[1],Xtrain.shape[2],1)
@@ -91,15 +112,15 @@ NUM_CHANNELS = 1
 NUM_LABELS = 2
 INCLUDE_TEST_SET = True
 
-normalization = False #choose whether we want local response normalization or not
+normalization = True #choose whether we want local response normalization or not
 
-print 'Settings:'
+print '\nSettings:'
 print 'BIN_FREQ', BIN_FREQ
 print 'WINDOW_SIZE', WINDOW_SIZE
 print "NUM_CHANNELS", NUM_CHANNELS
 print "NUM_LABELS", NUM_LABELS
 print "INCLUDE_TEST_SET", INCLUDE_TEST_SET
-print "normalization", normalization
+print "NORMALIZATION", normalization
 
 class SpectogramConvNet:
     def __init__(self):
@@ -120,12 +141,12 @@ class SpectogramConvNet:
         self.define_tensorflow_graph()
 
     def define_tensorflow_graph(self):
-        print '\n Defining model...'
+        print '\nDefining model...'
 
         # Hyperparameters
         batch_size = 10
-        learning_rate = 0.1
-        num_training_steps = 1501
+        learning_rate = 1e-3
+        num_training_steps = 15000
 
         with self.graph.as_default():
             # Input data
@@ -141,6 +162,15 @@ class SpectogramConvNet:
             full2_keep_prob = tf.placeholder(tf.float32)
             full1_keep_prob = tf.placeholder(tf.float32)
 
+
+            # Layer 3 Params:
+
+
+            # Layer 4 Params:
+            full2_depth = 1024                              
+            full2_weights = [full2_depth, NUM_LABELS]
+            full2_weights = tf.Variable(tf.truncated_normal(full2_weights, stddev=0.1))    
+            full2_bias = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]))
             # Model
             def network_model(data):
                 '''Define the actual network architecture'''
@@ -172,11 +202,11 @@ class SpectogramConvNet:
                                         padding='SAME', name='pool1')
             
                 # Layer 3: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
-                full1_depth = 4000
+                full1_depth = 1024
                 
                 shape = hidden.get_shape().as_list()
                 reshape = tf.reshape(hidden, [shape[0], shape[1] * shape[2] * shape[3]])
-                
+                print 'A', shape[1], shape[2], shape[3]
                 full1_weights = [shape[1] * shape[2] * shape[3], full1_depth]
                 full1_weights = tf.Variable(tf.truncated_normal(full1_weights, stddev=0.1))    
                 full1_bias = tf.Variable(tf.constant(1.0, shape=[full1_depth]))
@@ -185,19 +215,11 @@ class SpectogramConvNet:
                 hidden = tf.nn.dropout(hidden, full1_keep_prob)
 
                 # Layer 4: Fully connected layer with 1024 units, a dropout ratio of 0.5 and ReLU non-linearities
-                full2_depth = 4000
-                
-                              
-                full2_weights = [full2_depth, NUM_LABELS]
-                full2_weights = tf.Variable(tf.truncated_normal(full2_weights, stddev=0.1))    
-                full2_bias = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]))
-
                 hidden = tf.nn.relu(tf.matmul(hidden, full2_weights) + full2_bias)      
                 hidden = tf.nn.dropout(hidden, full2_keep_prob)
           
           
-                output = hidden      
-                return output
+                return hidden
 
             # Training computation
             logits = network_model(tf_train_batch)
@@ -238,16 +260,13 @@ class SpectogramConvNet:
                             print ''
                             print('\tBatch loss at step %d: %f' % (step, l))
                             print('\tBatch training accuracy: %.1f%%' % accuracy(predictions, batch_labels))
+                            print predictions, batch_labels
                             print('\tValidation accuracy: %.1f%%' % accuracy(val_preds, self.val_Y))
                             print('\tFull train accuracy: %.1f%%' % accuracy(train_preds, self.train_Y))
 
             # save train model function so it can be called later
             self.train_model = train_model
 
-
-def accuracy(predictions, labels):
-  return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
-          / predictions.shape[0])
 
 t1 = time.time()
 conv_net = SpectogramConvNet()
