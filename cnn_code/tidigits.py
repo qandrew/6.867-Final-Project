@@ -35,7 +35,7 @@ EVAL_FREQUENCY = 100  # Number of steps between evaluations.
 
 
 tf.app.flags.DEFINE_boolean("self_test",False , "True if running a self test.")
-tf.app.flags.DEFINE_boolean('use_fp16', False,
+tf.app.flags.DEFINE_boolean('use_fp16', True,
                             "Use half floats instead of full floats if True.")
 FLAGS = tf.app.flags.FLAGS
 
@@ -63,7 +63,7 @@ def extract_data(rootdir, datasize=None):
         return X, categorical_Y
     else:
         return X[:datasize], categorical_Y[:datasize]
-        
+
 def fake_data(num_images):
   """Generate a fake binary dataset that matches the dimensions of TIDIGTS."""
   data = numpy.ndarray(
@@ -121,14 +121,14 @@ def main(argv=None):  # pylint: disable=unused-argument
                           stddev=0.1,
                           seed=SEED, dtype=data_type()))
   conv1_biases = tf.Variable(tf.zeros([64], dtype=data_type()))
-    
+
   fc1_weights = tf.Variable(  # fully connected, depth 1024.
       tf.truncated_normal([100 * 12 * 64, 1024],
                           stddev=0.1,
                           seed=SEED,
                           dtype=data_type()))
   fc1_biases = tf.Variable(tf.constant(0.1, shape=[1024], dtype=data_type()))
-  
+
   fc2_weights = tf.Variable(tf.truncated_normal([1024, NUM_LABELS],
                                                 stddev=0.1,
                                                 seed=SEED,
@@ -149,11 +149,11 @@ def main(argv=None):  # pylint: disable=unused-argument
                         padding='SAME')
     # Bias and rectified linear non-linearity.
     relu = tf.nn.relu(tf.nn.bias_add(conv, conv1_biases))
-   
+
     # Local response normalization width = 5, alpha = 1e-4, beta = 0.75
     normalized = tf.nn.local_response_normalization(relu, depth_radius=5, bias=None, alpha=1e-4, beta=0.75)
-            
-            
+
+
     # Max pooling. The kernel size spec {ksize} also follows the layout of
     # the data. Here we have a pooling window of 3 x 4, and a stride of 1 x 2.
     pool = tf.nn.max_pool(normalized,
