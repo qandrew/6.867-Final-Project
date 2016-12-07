@@ -35,7 +35,7 @@ EVAL_FREQUENCY = 100  # Number of steps between evaluations.
 
 
 tf.app.flags.DEFINE_boolean("self_test",False , "True if running a self test.")
-tf.app.flags.DEFINE_boolean('use_fp16', True,
+tf.app.flags.DEFINE_boolean('use_fp16', False,
                             "Use half floats instead of full floats if True.")
 FLAGS = tf.app.flags.FLAGS
 

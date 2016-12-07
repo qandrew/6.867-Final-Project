@@ -108,6 +108,16 @@ def get_data(rootdir):
                     assert (window_size, spect_width) == row.shape
                     X.append(row)
                     Y.append(y_val)
+                if filename[3]=='z':
+                    y_val = np.zeros((dim_Y,1))
+                    y_val[0] = 1
+                    f = open(os.path.join(subdir, filename))
+                    row = load_from_file(f)
+                    f.close()
+                    #check to ensure data has the right dimension
+                    assert (window_size, spect_width) == row.shape
+                    X.append(row)
+                    Y.append(y_val)
     return np.array(X,dtype=np.float32), np.array(Y, dtype=np.float32)
     
 
