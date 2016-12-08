@@ -124,11 +124,16 @@ def get_data(rootdir):
 if __name__ == "__main__":
 
     x,y = get_data(rootdir)
-    print x[0]
-    print y[0]
-
     np.savetxt('test.txt', x[0])
-    #example of printing a number
-    plt.imshow(x[0], aspect='auto', interpolation='none')
-    plt.show()
-
+    for i in range(len(y)):       
+        y_val = np.nonzero(y[i])[0][0]
+        x_norm = x[i]/np.max(x[i]) - 0.5
+        plt.imshow(x_norm, interpolation='none',cmap='gray')
+        plt.savefig(rootdir+'/spect'+str(y_val)+'/image_gray_norm_'+str(i)+'.eps')
+        plt.imshow(x[i], interpolation='none',cmap='gray')
+        plt.savefig(rootdir+'/spect'+str(y_val)+'/image_gray_'+str(i)+'.eps')
+        plt.imshow(x[i], interpolation='none')
+        plt.savefig(rootdir+'/spect'+str(y_val)+'/image_'+str(i)+'.eps')
+        
+        if i > 100:
+            break
