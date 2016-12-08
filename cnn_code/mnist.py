@@ -12,7 +12,7 @@ import os
 import sys
 import time
 
-import numpy
+import numpy as np
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -66,7 +66,7 @@ def extract_data(filename, num_images):
   with gzip.open(filename) as bytestream:
     bytestream.read(16)
     buf = bytestream.read(IMAGE_SIZE * IMAGE_SIZE * num_images * NUM_CHANNELS)
-    data = numpy.frombuffer(buf, dtype=numpy.uint8).astype(numpy.float32)
+    data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
     data = (data - (PIXEL_DEPTH / 2.0)) / PIXEL_DEPTH
     data = data.reshape(num_images, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS)
     return data
@@ -78,16 +78,16 @@ def extract_labels(filename, num_images):
   with gzip.open(filename) as bytestream:
     bytestream.read(8)
     buf = bytestream.read(1 * num_images)
-    labels = numpy.frombuffer(buf, dtype=numpy.uint8).astype(numpy.int64)
+    labels = np.frombuffer(buf, dtype=np.uint8).astype(np.int64)
   return labels
 
 
 def fake_data(num_images):
   """Generate a fake dataset that matches the dimensions of MNIST."""
-  data = numpy.ndarray(
+  data = np.ndarray(
       shape=(num_images, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS),
-      dtype=numpy.float32)
-  labels = numpy.zeros(shape=(num_images,), dtype=numpy.int64)
+      dtype=np.float32)
+  labels = np.zeros(shape=(num_images,), dtype=np.int64)
   for image in xrange(num_images):
     label = image % 2
     data[image, :, :, 0] = label - 0.5
@@ -99,7 +99,7 @@ def error_rate(predictions, labels):
   """Return the error rate based on dense predictions and sparse labels."""
   return 100.0 - (
       100.0 *
-      numpy.sum(numpy.argmax(predictions, 1) == labels) /
+      np.sum(np.argmax(predictions, 1) == labels) /
       predictions.shape[0])
 
 
@@ -169,7 +169,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
   # We will replicate the model structure for the training subgraph, as well
   # as the evaluation subgraphs, while sharing the trainable parameters.
-  def model(data, train=False):
+  def model(data, train=False, gethidden=False):
     """The Model definition."""
     # 2D convolution, with 'SAME' padding (i.e. the output feature map has
     # the same size as the input). Note that {strides} is a 4D array whose
@@ -208,6 +208,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     # activations such that no rescaling is needed at evaluation time.
     if train:
       hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
+    if gethidden:
+        return hidden
     return tf.matmul(hidden, fc2_weights) + fc2_biases
 
   # Training computation: logits + cross-entropy loss.
@@ -250,7 +252,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     size = data.shape[0]
     if size < EVAL_BATCH_SIZE:
       raise ValueError("batch size for evals larger than dataset: %d" % size)
-    predictions = numpy.ndarray(shape=(size, NUM_LABELS), dtype=numpy.float32)
+    predictions = np.ndarray(shape=(size, NUM_LABELS), dtype=np.float32)
     for begin in xrange(0, size, EVAL_BATCH_SIZE):
       end = begin + EVAL_BATCH_SIZE
       if end <= size:
@@ -271,7 +273,10 @@ def main(argv=None):  # pylint: disable=unused-argument
     tf.initialize_all_variables().run()
     print('Initialized!')
     # Loop through training steps.
-    for step in xrange(int(num_epochs * train_size) // BATCH_SIZE):
+    total = int(num_epochs * train_size) // BATCH_SIZE
+    # total = 2
+    print('total steps', total)
+    for step in xrange(total):
       # Compute the offset of the current minibatch in the data.
       # Note that we could use better randomization across epochs.
       offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
@@ -296,6 +301,38 @@ def main(argv=None):  # pylint: disable=unused-argument
         print('Validation error: %.1f%%' % error_rate(
             eval_in_batches(validation_data, sess), validation_labels))
         sys.stdout.flush()
+      if step == total-1:
+        #get data out
+        size = validation_data.shape[0]
+        print("last step, getting activation layers out for val")
+        print("total size",size)
+        eval_act = model(eval_data,gethidden=True)
+        
+        tosave = sess.run(eval_act,feed_dict={eval_data:validation_data[0:EVAL_BATCH_SIZE]})
+        for begin in xrange(EVAL_BATCH_SIZE, size, EVAL_BATCH_SIZE):
+          end = begin + EVAL_BATCH_SIZE
+          if end <= size: #normal case
+            temp = sess.run(eval_act,
+                feed_dict={eval_data:validation_data[begin:end]})
+          else: #get the last few entries
+            huding = sess.run(
+                eval_act,
+                feed_dict={eval_data: validation_data[size-EVAL_BATCH_SIZE :]})
+            # temp[begin:, :] = batch_predictions[begin - size:, :]
+            temp = huding[-(size - begin):,] #only want last few entries
+            # print ('lasttemp',temp.shape)
+          tosave = np.concatenate((tosave,temp),axis=0)
+          # print("iter",begin,"and",tosave.shape)
+        print(tosave)
+        print(tosave.shape)
+        np.savetxt('featureVector/mnistLastLayer512.txt',tosave)
+        print('exported last layer to featureVector/mnistLastLayer512.txt')
+        print('val label',validation_labels.shape)
+        print(validation_labels)
+        np.savetxt('featureVector/mnistYVal512.txt',validation_labels)
+        print('exported labels to featureVector/mnistYVal512.txt')
+
+
     # Finally print the result!
     test_error = error_rate(eval_in_batches(test_data, sess), test_labels)
     print('Test error: %.1f%%' % test_error)
