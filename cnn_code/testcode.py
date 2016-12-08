@@ -13,7 +13,19 @@ data = np.random.randn(y.size,x.size)
 print data.shape
 
 
-plt.imshow(data, aspect='auto', interpolation='none')
+# plt.imshow(data, aspect='auto', interpolation='none')
            # extent=extents(x) + extents(y))
+# plt.show()
+
+
+a = [3,4,5,10]
+c = [1,2,3,4]
+b = [2,3,4,5]
+plt.plot(c,a,label='test')
+plt.plot(b,'go')
+plt.legend(loc=2)
+plt.savefig(str(a[0])+'py.png')
 plt.show()
-# plt.savefig('py.png')
+
+# np.savetxt('featureVector/test.txt',data)
+
