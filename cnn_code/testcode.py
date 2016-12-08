@@ -16,19 +16,16 @@ print data.shape
 # plt.imshow(data, aspect='auto', interpolation='none')
            # extent=extents(x) + extents(y))
 # plt.show()
-# plt.savefig('py.png')
 
-# a = [3,4,5,10]
-# c = [1,2,3,4]
-# b = [2,3,4,5]
-# plt.plot(c,a,label='test')
-# plt.plot(b,'go')
-# plt.legend()
-# plt.show()
+
+a = [3,4,5,10]
+c = [1,2,3,4]
+b = [2,3,4,5]
+plt.plot(c,a,label='test')
+plt.plot(b,'go')
+plt.legend(loc=2)
+plt.savefig(str(a[0])+'py.png')
+plt.show()
 
 # np.savetxt('featureVector/test.txt',data)
-
-a = np.loadtxt(open('featureVector/cnnLastLayer.txt'))
-print a.shape
-print a[-1]
 

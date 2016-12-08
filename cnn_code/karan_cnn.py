@@ -24,12 +24,12 @@ INCLUDE_TEST_SET = True
 VALIDATION_SIZE = 1000  # Size of the validation set.
 
 class SpecConvNet:
-    def __init__(self):
+    def __init__(self,hiddenSize=1024):
         '''Initialize the class by loading the required datasets
         and building the graph'''
         self.load_dataset(traindir,testdir)
         self.graph = tf.Graph()
-        self.define_tensorflow_graph()
+        self.define_tensorflow_graph(hiddenSize)
 
         #for plotting
         self.batch_plot = []
@@ -71,7 +71,7 @@ class SpecConvNet:
         print 'Validation set', self.val_X.shape, self.val_Y.shape
         if INCLUDE_TEST_SET: print 'Test set', self.test_X.shape, self.test_Y.shape
 
-    def define_tensorflow_graph(self):
+    def define_tensorflow_graph(self,hiddenSize=1024):
         print '\nDefining model...'
         # Hyperparameters
         batch_size = 10
@@ -81,8 +81,8 @@ class SpecConvNet:
         layer1_depth = 64
         layer1_stride = 1
 
-        layer2_num_hidden = 1024
-        layer3_num_hidden = 1024
+        layer2_num_hidden = hiddenSize
+        layer3_num_hidden = hiddenSize
 
         num_training_steps = 1501 #1501
         print 'doing', num_training_steps, 'training steps'
@@ -203,6 +203,7 @@ class SpecConvNet:
                             print('Validation accuracy: %.1f%%' % val_acc)
                             print('Full train accuracy: %.1f%%' % train_acc)
 
+                            # self.batch_plot.2append(batch_acc)
                             self.batch_plot.append(batch_acc)
                             self.val_plot.append(val_acc)
                             self.train_plot.append(train_acc)
@@ -213,9 +214,10 @@ class SpecConvNet:
                             self.tosave = session.run(val_last, feed_dict={dropout_keep_prob : 1.0}) #get second last layer
                             
                             #save the |val|*1024 last fully connected layer to a text file
-                            np.savetxt('featureVector/cnnLastLayer.txt',self.tosave)
+                            np.savetxt('featureVector/cnnLastLayerVal'+str(hiddenSize)+'NEW.txt',self.tosave)
                             #save the corresponding actual classifications to a text file
-                            np.savetxt('featureVector/cnnActualYVals.txt',self.val_Y)
+                            np.savetxt('featureVector/cnnActualYVal'+str(hiddenSize)+'NEW.txt',self.val_Y)
+                            print('Saved to featureVector/cnnActualYVal'+str(hiddenSize)+'NEW.txt')
 
 
 
@@ -230,8 +232,10 @@ def accuracy(predictions, labels):
           / predictions.shape[0])
 
 if __name__ == '__main__':
+
+    #512 hidden layer
     t1 = time.time()
-    conv_net = SpecConvNet()
+    conv_net = SpecConvNet(hiddenSize=512)
     conv_net.train_model()
     t2 = time.time()
     print "Finished training. Total time taken:", t2-t1
@@ -243,6 +247,28 @@ if __name__ == '__main__':
     print "Plotting"
     plt.plot(conv_net.steps,conv_net.batch_plot,'ro-',label='batch')
     plt.plot(conv_net.steps,conv_net.val_plot,'go-',label='validation')
-    plt.plot(conv_net.steps,conv_net.train_plot,'ro-',label='train')
-    plt.legend()
-    plt.show()
+    plt.plot(conv_net.steps,conv_net.train_plot,'bo-',label='train')
+    plt.legend(loc=2)
+    plt.savefig('featureVector/512outNEW.png')
+    # plt.show()
+
+    #1024 hidden layer
+    t1 = time.time()
+    conv_net = SpecConvNet(hiddenSize=1024)
+    conv_net.train_model()
+    t2 = time.time()
+    print "Finished training. Total time taken:", t2-t1
+
+    print len(conv_net.tosave)
+    print conv_net.tosave.shape
+    print conv_net.tosave
+
+    print "Plotting"
+    plt.clf()
+    plt.plot(conv_net.steps,conv_net.batch_plot,'ro-',label='batch')
+    plt.plot(conv_net.steps,conv_net.val_plot,'go-',label='validation')
+    plt.plot(conv_net.steps,conv_net.train_plot,'bo-',label='train')
+    plt.legend(loc=2)
+    plt.savefig('featureVector/1024outNEW.png')
+
+    print 'done'
