@@ -26,5 +26,9 @@ print data.shape
 # plt.legend()
 # plt.show()
 
-np.savetxt('featureVector/test.txt',data)
+# np.savetxt('featureVector/test.txt',data)
+
+a = np.loadtxt(open('featureVector/cnnLastLayer.txt'))
+print a.shape
+print a[-1]
 

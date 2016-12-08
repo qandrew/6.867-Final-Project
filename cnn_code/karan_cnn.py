@@ -189,7 +189,7 @@ class SpecConvNet:
                                      dropout_keep_prob: dropout_prob}
                         _, l, predictions = session.run(
                           [optimizer, loss, batch_prediction], feed_dict=feed_dict)
-                        if (step % 100 == 0):
+                        if (step % 50 == 0):
                             train_preds = session.run(train_prediction, feed_dict={tf_train_dataset: self.train_X,
                                                                            dropout_keep_prob : 1.0})
                             val_preds = session.run(valid_prediction, feed_dict={dropout_keep_prob : 1.0})
@@ -213,9 +213,9 @@ class SpecConvNet:
                             self.tosave = session.run(val_last, feed_dict={dropout_keep_prob : 1.0}) #get second last layer
                             
                             #save the |val|*1024 last fully connected layer to a text file
-                            np.savetxt('featureVector/cnnLastLayer.txt')
+                            np.savetxt('featureVector/cnnLastLayer.txt',self.tosave)
                             #save the corresponding actual classifications to a text file
-                            np.savetxt('featureVector/cnnActualYVals.txt')
+                            np.savetxt('featureVector/cnnActualYVals.txt',self.val_Y)
 
 
 
