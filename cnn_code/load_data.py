@@ -100,7 +100,7 @@ def get_data(rootdir):
             except ValueError:
                 if filename[3]=='o':
                     y_val = np.zeros((dim_Y,1))
-                    y_val[dim_Y-1] = 1
+                    y_val[dim_Y-1] = 1 #the last entry (index 10) set as 1 for 'o'
                     f = open(os.path.join(subdir, filename))
                     row = load_from_file(f)
                     f.close()
@@ -110,7 +110,7 @@ def get_data(rootdir):
                     Y.append(y_val)
                 if filename[3]=='z':
                     y_val = np.zeros((dim_Y,1))
-                    y_val[0] = 1
+                    y_val[0] = 1 #the first entry (index 0) set as 1 for 'z' or zero
                     f = open(os.path.join(subdir, filename))
                     row = load_from_file(f)
                     f.close()
