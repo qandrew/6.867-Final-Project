@@ -217,6 +217,7 @@ class SpecConvNet:
                             np.savetxt('featureVector/cnnLastLayerVal'+str(hiddenSize)+'NEW.txt',self.tosave)
                             #save the corresponding actual classifications to a text file
                             np.savetxt('featureVector/cnnActualYVal'+str(hiddenSize)+'NEW.txt',self.val_Y)
+                            
                             print('Saved to featureVector/cnnActualYVal'+str(hiddenSize)+'NEW.txt')
 
 
@@ -234,22 +235,22 @@ def accuracy(predictions, labels):
 if __name__ == '__main__':
 
     #512 hidden layer
-    t1 = time.time()
-    conv_net = SpecConvNet(hiddenSize=512)
-    conv_net.train_model()
-    t2 = time.time()
-    print "Finished training. Total time taken:", t2-t1
+    # t1 = time.time()
+    # conv_net = SpecConvNet(hiddenSize=512)
+    # conv_net.train_model()
+    # t2 = time.time()
+    # print "Finished training. Total time taken:", t2-t1
 
-    print len(conv_net.tosave)
-    print conv_net.tosave.shape
-    print conv_net.tosave
+    # print len(conv_net.tosave)
+    # print conv_net.tosave.shape
+    # print conv_net.tosave
 
-    print "Plotting"
-    plt.plot(conv_net.steps,conv_net.batch_plot,'ro-',label='batch')
-    plt.plot(conv_net.steps,conv_net.val_plot,'go-',label='validation')
-    plt.plot(conv_net.steps,conv_net.train_plot,'bo-',label='train')
-    plt.legend(loc=2)
-    plt.savefig('featureVector/512outNEW.png')
+    # print "Plotting"
+    # plt.plot(conv_net.steps,conv_net.batch_plot,'ro-',label='batch')
+    # plt.plot(conv_net.steps,conv_net.val_plot,'go-',label='validation')
+    # plt.plot(conv_net.steps,conv_net.train_plot,'bo-',label='train')
+    # plt.legend(loc=2)
+    # plt.savefig('featureVector/512outNEW.png')
     # plt.show()
 
     #1024 hidden layer
