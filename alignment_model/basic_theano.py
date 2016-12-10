@@ -9,7 +9,7 @@ FOR EACH BATCH v,w:
     STEP 1: Embed v, w to y, x in h-dimensional space
     STEP 2: Compute the cost function
     STEP 3: Perform a gradient update step on this cost
-    
+
     REPEAT UNTIL COST FUNCTION CONVERGES
 """
 import numpy as np
@@ -23,9 +23,9 @@ dim_v = 1024
 dim_w = 512
 
 ''' SGD PARAMETERS '''
-learning_rate = 1e-3
+learning_rate = 1e-5
 momentum = 0.9
-max_iterations = 1e4
+max_iterations = 1e5
 
 ''' INITIALISE WEIGHTS AND BIASES '''
 W_v = theano.shared(np.random.normal(size=(h,dim_v)), 'W_v')
@@ -54,7 +54,7 @@ for subdir, dirs, files in os.walk(data512dir):
             elif i == 'o': j = 0
             else: j = int(i)
             dict512[j] = temp
-          
+
 for subdir, dirs, files in os.walk(data1024dir):
     for file in files:
         filepath = subdir + os.sep + file
@@ -75,30 +75,30 @@ for subdir, dirs, files in os.walk(dataMnistdir):
             dictMnist[j] = temp
 
 """Get a random batch"""
-def get_batch_MNist(d): 
+def get_batch_MNist(d):
     # d is the dictionary that we feed in
     # we will return a 11x512 matrix
-    toreturn = np.matrix(d[0][np.random.randint(0,d[0].shape[0])]) #get a random entry from 
+    toreturn = np.matrix(d[0][np.random.randint(0,d[0].shape[0])]) #get a random entry from
     for i in xrange(1,10):
         toreturn = np.concatenate((toreturn, np.matrix(d[i][np.random.randint(0,d[i].shape[0])]) ))
     toreturn = np.concatenate((toreturn,toreturn[0])) #duplicate the 0th entry at the end
-    return toreturn 
+    return toreturn
 
-def get_batch_Spectro(d): 
+def get_batch_Spectro(d):
     # d is the dictionary that we feed in
     # we will return a 11x(1024 or 512) matrix, depending on if we are doing get_batch(dict512, or dict1024)
-    toreturn = np.matrix(d[0][np.random.randint(0,d[0].shape[0])]) #get a random entry from 
+    toreturn = np.matrix(d[0][np.random.randint(0,d[0].shape[0])]) #get a random entry from
     for i in xrange(1,11):
         toreturn = np.concatenate((toreturn, np.matrix(d[i][np.random.randint(0,d[i].shape[0])]) ))
     return toreturn
-                              
+
 ''' EMBEDDING MODEL '''
 
-V = theano.tensor.matrix('V') 
-W = theano.tensor.matrix('W') 
+V = theano.tensor.matrix('V')
+W = theano.tensor.matrix('W')
 
-V_vals = np.random.random((n,dim_v))
-W_vals = np.random.random((n,dim_w))
+V_vals = np.random.normal((n,dim_v))
+W_vals = np.random.normal((n,dim_w))
 
 #Cast data to float32
 V_vals=np.array(V_vals, dtype=np.float32)
@@ -113,8 +113,8 @@ print '-----------------------------'
 
 Y = (theano.tensor.dot(W_v,V.T) + theano.tensor.tile(b_v, reps=(1,n))).T # Creates a function that evaluates the new embedding of V.
 X = (theano.tensor.dot(W_w,W.T) + theano.tensor.tile(b_w, reps=(1,n))).T # Creates a function that evaluates the new embedding of W
-embed_Y = theano.function([V], Y, name='compute Y from V')  ##called like compute_Y(V_vals) 
-embed_X = theano.function([W], X, name='compute X from W')  ##called like compute_X(W_vals) 
+embed_Y = theano.function([V], Y, name='compute Y from V')  ##called like compute_Y(V_vals)
+embed_X = theano.function([W], X, name='compute X from W')  ##called like compute_X(W_vals)
 
 
 # Compute the cost of an embedding
@@ -133,7 +133,7 @@ gW_v, gb_v, gW_w, gb_w = theano.tensor.grad(cost, [W_v, b_v, W_w, b_w])         
 train = theano.function(
           inputs=[V,W],
           outputs=[cost],
-          updates=((W_v, W_v - learning_rate * gW_v + (1. - momentum)*gW_v),(b_v, b_v - learning_rate * gb_v + (1. - momentum)*gb_v),(W_w, W_w - learning_rate * gW_w + (1. - momentum)*gW_w), (b_w, b_w - learning_rate * gb_w + (1. - momentum)*gb_w)))
+          updates=((W_v, W_v - learning_rate * gW_v),(b_v, b_v - learning_rate * gb_v),(W_w, W_w - learning_rate * gW_w), (b_w, b_w - learning_rate * gb_w)))
 
 # Train
 
@@ -145,20 +145,21 @@ while iters < max_iterations and not converged:
     # Grab a random pair of batch data. Must have 11 rows and the corresponding dimensions for MNIST and TIDIGITS
     V_vals = get_batch_Spectro(dict1024)
     W_vals = get_batch_MNist(dictMnist)
-    
-    # V_vals = np.random.normal(size=(11,1024))    
+
+    # V_vals = np.random.normal(size=(11,1024))
     # W_vals = np.random.normal(size=(11,512))
-    
+
     iters += 1
     cost = train(V_vals,W_vals)[0]
-    print cost
+    # print cost
     if abs(cost-cost_history[-1]) < thresh:
         converged = True
     cost_history.append(cost)
-    if iters%100==0:
+    if iters%1000==0:
         print iters,' : ',cost
-print("Final model:")
-print(W_v.get_value())
-print(b_v.get_value())
-print(W_w.get_value())
-print(b_w.get_value())
+# print("Final model:")
+# print(W_v.get_value())
+# print(b_v.get_value())
+# print(W_w.get_value())
+# print(b_w.get_value())
+print(cost,cost_history[0],cost_history[1])
