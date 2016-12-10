@@ -1,0 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Dec  9 14:28:40 2016
+
+@author: sitara
+"""
+import numpy as np
+import theano
+
+V = theano.tensor.fmatrix('V', dtype=np.float32) 
+W = theano.tensor.fmatrix('W', dtype=np.float32) 
+
+V_vals = np.random.randint(0,1,(10,4))
+W_vals = np.random.randint(0,1,(10,4))
+
+print V_vals
+print W_vals
