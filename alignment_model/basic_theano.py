@@ -14,6 +14,7 @@ FOR EACH BATCH v,w:
 """
 import numpy as np
 import theano
+import os
 
 ''' DIMENSION PARAMETERS '''
 n = 11
@@ -32,6 +33,85 @@ W_w = theano.shared(np.random.normal(size=(h,dim_w)), 'W_w')
 b_v = theano.shared(np.random.normal(size=(h,1)), 'b_v')
 b_w = theano.shared(np.random.normal(size=(h,1)), 'b_w')
 
+""" IMPORTING DATA """
+data1024dir = '../cnn_code/spectro1024Act'
+data512dir = '../cnn_code/spectro512Act'
+dataMnistdir = '../cnn_code/mnistAct'
+
+
+# each activation layer is a row in the matrix
+# and it's actual classification is in the corresponding YVal array at the same index
+data1024 = np.array([[0 for i in xrange(1024)]])
+data1024YVal = []
+data512 = np.matrix([[0 for i in xrange(512)]])
+data512YVal = []
+dataMnist = np.array([[0 for i in xrange(512)]])
+dataMnistYVal = []
+
+
+for subdir, dirs, files in os.walk(data512dir):
+    for file in files:
+        print os.path.join(subdir, file)
+        filepath = subdir + os.sep + file
+
+        if filepath.endswith(".txt"):
+            # print filepath
+            temp = np.loadtxt(open(filepath))
+            # print temp.shape
+            i = filepath[-5]
+            if i == 'z': j = 10
+            elif i == 'o': j = 0
+            else: j = int(i)
+            for i in xrange(temp.shape[0]):
+              data512YVal.append(j)
+            data512 = np.concatenate((data512,temp))
+data512YVal = np.matrix(data512YVal).T
+data512 = data512[1:]
+# print data512.shape
+# print data512YVal.shape            
+
+for subdir, dirs, files in os.walk(data1024dir):
+    for file in files:
+        print os.path.join(subdir, file)
+        filepath = subdir + os.sep + file
+
+        if filepath.endswith(".txt"):
+            # print filepath
+            temp = np.loadtxt(open(filepath))
+            # print temp.shape
+            i = filepath[-5]
+            if i == 'z': j = 10
+            elif i == 'o': j = 0
+            else: j = int(i)
+            for i in xrange(temp.shape[0]):
+              data1024YVal.append(j)
+            data1024 = np.concatenate((data1024,temp))
+data1024YVal = np.matrix(data1024YVal).T
+data1024 = data1024[1:]
+# print data1024.shape
+# print data1024YVal.shape  
+
+for subdir, dirs, files in os.walk(dataMnistdir):
+    for file in files:
+        print os.path.join(subdir, file)
+        filepath = subdir + os.sep + file
+
+        if filepath.endswith(".txt"):
+            # print filepath
+            temp = np.loadtxt(open(filepath))
+            # print temp.shape
+            i = filepath[-5]
+            if i == 'z': j = 10
+            elif i == 'o': j = 0
+            else: j = int(i)
+            for i in xrange(temp.shape[0]):
+              dataMnistYVal.append(j)
+            dataMnist = np.concatenate((dataMnist,temp))
+dataMnistYVal = np.matrix(dataMnistYVal).T
+dataMnist = dataMnist[1:]
+# print dataMnist.shape
+# print dataMnistYVal.shape  
+
 ''' EMBEDDING MODEL '''
 
 V = theano.tensor.matrix('V') 
@@ -40,7 +120,7 @@ W = theano.tensor.matrix('W')
 V_vals = np.random.random((n,dim_v))
 W_vals = np.random.random((n,dim_w))
 
-#Cast data to float43
+#Cast data to float32
 V_vals=np.array(V_vals, dtype=np.float32)
 W_vals=np.array(W_vals, dtype=np.float32)
 
