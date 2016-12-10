@@ -48,6 +48,9 @@ data512YVal = []
 dataMnist = np.array([[0 for i in xrange(512)]])
 dataMnistYVal = []
 
+dict1024 = {}
+dict512 = {}
+dictMnist = {}
 
 for subdir, dirs, files in os.walk(data512dir):
     for file in files:
@@ -65,6 +68,7 @@ for subdir, dirs, files in os.walk(data512dir):
             for i in xrange(temp.shape[0]):
               data512YVal.append(j)
             data512 = np.concatenate((data512,temp))
+            dict512[j] = temp
 data512YVal = np.matrix(data512YVal).T
 data512 = data512[1:]
 # print data512.shape
@@ -86,6 +90,7 @@ for subdir, dirs, files in os.walk(data1024dir):
             for i in xrange(temp.shape[0]):
               data1024YVal.append(j)
             data1024 = np.concatenate((data1024,temp))
+            dict1024[j] = temp
 data1024YVal = np.matrix(data1024YVal).T
 data1024 = data1024[1:]
 # print data1024.shape
@@ -100,18 +105,36 @@ for subdir, dirs, files in os.walk(dataMnistdir):
             # print filepath
             temp = np.loadtxt(open(filepath))
             # print temp.shape
-            i = filepath[-5]
-            if i == 'z': j = 10
-            elif i == 'o': j = 0
-            else: j = int(i)
-            for i in xrange(temp.shape[0]):
-              dataMnistYVal.append(j)
-            dataMnist = np.concatenate((dataMnist,temp))
+            j = int(filepath[-5])
+#             if i == 'z': j = 10
+#             elif i == 'o': j = 0
+#             else: j = int(i)
+#             for i in xrange(temp.shape[0]):
+#               dataMnistYVal.append(j)
+#             dataMnist = np.concatenate((dataMnist,temp))
+            dictMnist[j] = temp
 dataMnistYVal = np.matrix(dataMnistYVal).T
 dataMnist = dataMnist[1:]
 # print dataMnist.shape
 # print dataMnistYVal.shape  
 
+def get_batch_MNist(d): 
+    # d is the dictionary that we feed in
+    # we will return a 11x512 matrix
+    toreturn = d[0][np.random.randint(0,d[0].shape[0]) #get a random entry from 
+    for i in xrange(1,10):
+        toreturn = np.concatenate((toreturn, d[i][np.random.randint(0,d[i].shape[0]))
+    toreturn = np.concatenate((toreturn,toreturn[0]) #duplicate the 0th entry at the end
+    return toreturn
+
+def get_batch_Spectro(d): 
+    # d is the dictionary that we feed in
+    # we will return a 11x(1024 or 512) matrix, depending on if we are doing get_batch(dict512, or dict1024)
+    toreturn = d[0][np.random.randint(0,d[0].shape[0]) #get a random entry from 
+    for i in xrange(1,11):
+        toreturn = np.concatenate((toreturn, d[i][np.random.randint(0,d[i].shape[0]))
+    return toreturn
+                              
 ''' EMBEDDING MODEL '''
 
 V = theano.tensor.matrix('V') 
