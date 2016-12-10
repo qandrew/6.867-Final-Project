@@ -17,9 +17,9 @@ import theano
 
 ''' DIMENSION PARAMETERS '''
 n = 11
-h = 6
-dim_v = 5
-dim_w = 2
+h = 512
+dim_v = 1024
+dim_w = 512
 
 ''' SGD PARAMETERS '''
 learning_rate = 1e-3
@@ -52,14 +52,14 @@ print '-----------------------------'
 
 
 Y = (theano.tensor.dot(W_v,V.T) + theano.tensor.tile(b_v, reps=(1,n))).T # Creates a function that evaluates the new embedding of V.
-X = (theano.tensor.dot(W_w,W.T) + theano.tensor.tile(b_v, reps=(1,n))).T # Creates a function that evaluates the new embedding of W
+X = (theano.tensor.dot(W_w,W.T) + theano.tensor.tile(b_w, reps=(1,n))).T # Creates a function that evaluates the new embedding of W
 embed_Y = theano.function([V], Y, name='compute Y from V')  ##called like compute_Y(V_vals) 
 embed_X = theano.function([W], X, name='compute X from W')  ##called like compute_X(W_vals) 
 
 
 # Compute the cost of an embedding
 
-cost = theano.tensor.nnet.relu(1+ theano.tensor.dot((theano.tensor.dot(W_v,V.T) + theano.tensor.tile(b_v, reps=(1,n))).T,theano.tensor.dot(W_w,W.T) + theano.tensor.tile(b_v, reps=(1,n))) - theano.tensor.nlinalg.diag(theano.tensor.dot((theano.tensor.dot(W_v,V.T) + theano.tensor.tile(b_v, reps=(1,n))).T,theano.tensor.dot(W_w,W.T) + theano.tensor.tile(b_v, reps=(1,n))))).sum()
+cost = theano.tensor.nnet.relu(1+ theano.tensor.dot((theano.tensor.dot(W_v,V.T) + theano.tensor.tile(b_v, reps=(1,n))).T,theano.tensor.dot(W_w,W.T) + theano.tensor.tile(b_w, reps=(1,n))) - theano.tensor.nlinalg.diag(theano.tensor.dot((theano.tensor.dot(W_v,V.T) + theano.tensor.tile(b_v, reps=(1,n))).T,theano.tensor.dot(W_w,W.T) + theano.tensor.tile(b_w, reps=(1,n))))).sum()
 
 #cost_calc = theano.tensor.nnet.relu(1+ theano.tensor.dot(compute_Y(V),compute_X(W).T) - theano.tensor.nlinalg.diag(theano.tensor.dot(compute_Y(V),compute_X(W).T))).sum()
 
@@ -86,12 +86,17 @@ while iters < max_iterations and not converged:
     #V_vals = 
     #W_vals = 
     
+    V_vals = np.random.normal(size=(11,1024))    
+    W_vals = np.random.normal(size=(11,512))
+    
     iters += 1
-    cost = train(V_vals)
+    cost = train(V_vals,W_vals)[0]
+    print cost
     if abs(cost-cost_history[-1]) < thresh:
         converged = True
     cost_history.append(cost)
-
+    if iters%100==0:
+        print iters,' : ',cost
 print("Final model:")
 print(W_v.get_value())
 print(b_v.get_value())
