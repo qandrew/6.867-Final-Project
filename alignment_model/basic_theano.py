@@ -133,7 +133,7 @@ gW_v, gb_v, gW_w, gb_w = theano.tensor.grad(cost, [W_v, b_v, W_w, b_w])         
 train = theano.function(
           inputs=[V,W],
           outputs=[cost],
-          updates=((W_v, W_v - learning_rate * gW_v),(b_v, b_v - learning_rate * gb_v),(W_w, W_w - learning_rate * gW_w), (b_w, b_w - learning_rate * gb_w)))
+          updates=((W_v, W_v - learning_rate * gW_v + (1. - momentum)*W_v)),(b_v, b_v - learning_rate * gb_v + (1. - momentum)*b_v)),(W_w, W_w - learning_rate * gW_w + (1. - momentum)*W_w)), (b_w, b_w - learning_rate * gb_w + (1. - momentum)*b_w))))
 
 # Train
 
