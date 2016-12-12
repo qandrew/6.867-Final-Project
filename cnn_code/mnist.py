@@ -16,6 +16,7 @@ import numpy as np
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 WORK_DIRECTORY = 'data'
@@ -28,7 +29,7 @@ SEED = 66478  # Set to None for random seed.
 BATCH_SIZE = 64
 NUM_EPOCHS = 10
 EVAL_BATCH_SIZE = 64
-EVAL_FREQUENCY = 100  # Number of steps between evaluations.
+EVAL_FREQUENCY =  100 # Number of steps between evaluations.
 
 
 tf.app.flags.DEFINE_boolean("self_test", False, "True if running a self test.")
@@ -274,8 +275,9 @@ def main(argv=None):  # pylint: disable=unused-argument
     print('Initialized!')
     # Loop through training steps.
     total = int(num_epochs * train_size) // BATCH_SIZE
-    # total = 2
+    # total = 5
     print('total steps', total)
+    evalList = []; predList = []; valList = [] # for graph
     for step in xrange(total):
       # Compute the offset of the current minibatch in the data.
       # Note that we could use better randomization across epochs.
@@ -297,9 +299,14 @@ def main(argv=None):  # pylint: disable=unused-argument
               (step, float(step) * BATCH_SIZE / train_size,
                1000 * elapsed_time / EVAL_FREQUENCY))
         print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
-        print('Minibatch error: %.1f%%' % error_rate(predictions, batch_labels))
-        print('Validation error: %.1f%%' % error_rate(
-            eval_in_batches(validation_data, sess), validation_labels))
+        predError = error_rate(predictions, batch_labels)
+        print('Minibatch error: %.1f%%' % predError)
+        valError = error_rate(eval_in_batches(validation_data, sess), validation_labels)
+        print('Validation error: %.1f%%' % valError)
+        predList.append(100.0-predError)
+        valList.append(100.0-valError)
+        evalList.append(step)
+
         sys.stdout.flush()
       if step == total-1:
         #get data out
@@ -341,6 +348,12 @@ def main(argv=None):  # pylint: disable=unused-argument
       assert test_error == 0.0, 'expected 0.0 test_error, got %.2f' % (
           test_error,)
 
+    plt.clf()
+    plt.plot(evalList,predList,'go-',label='training')
+    plt.plot(evalList,valList,'bo-',label='validation')
+    plt.legend(loc=2)
+    plt.savefig('featureVector/MNIST.png')    
+    plt.show()
 
 if __name__ == '__main__':
   tf.app.run()
